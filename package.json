@@ -1,0 +1,52 @@
+{
+  "name": "k6-test-framework",
+  "version": "1.0.0",
+  "description": "Comprehensive k6 performance testing framework with TypeScript and Grafana",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test:sample": "k6 run tests/samples/basic-test.js",
+    "test:load": "k6 run --out influxdb=http://localhost:8086/k6 tests/load/api-load-test.js",
+    "test:stress": "k6 run tests/stress/api-stress-test.js",
+    "test:spike": "k6 run tests/spike/api-spike-test.js",
+    "test:smoke": "k6 run tests/smoke/api-smoke-test.js",
+    "monitoring:up": "docker-compose -f docker/docker-compose.yml up -d",
+    "monitoring:down": "docker-compose -f docker/docker-compose.yml down",
+    "monitoring:logs": "docker-compose -f docker/docker-compose.yml logs -f",
+    "lint": "eslint tests/**/*.ts",
+    "format": "prettier --write tests/**/*.ts",
+    "clean": "rm -rf dist results/*.json",
+    "docs:serve": "docsify serve docs"
+  },
+  "keywords": [
+    "k6",
+    "performance-testing",
+    "load-testing",
+    "typescript",
+    "grafana",
+    "monitoring",
+    "api-testing"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/k6": "^0.47.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/k6-test-framework.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/k6-test-framework/issues"
+  },
+  "homepage": "https://github.com/yourusername/k6-test-framework#readme"
+}
