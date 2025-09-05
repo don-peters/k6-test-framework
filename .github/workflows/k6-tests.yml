@@ -1,0 +1,184 @@
+name: K6 Performance Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+        - smoke
+        - load
+        - stress
+        - spike
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'smoke' || github.event.inputs.test_type == '' || github.event_name != 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install k6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run smoke tests
+      run: k6 run tests/smoke/api-smoke-test.js
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: smoke-test-results
+        path: results/
+
+  load-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'load' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install k6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run load tests
+      run: k6 run --out json=results/load-test-results.json tests/load/api-load-test.js
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: load-test-results
+        path: results/
+
+  stress-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'stress'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install k6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run stress tests
+      run: k6 run --out json=results/stress-test-results.json tests/stress/api-stress-test.js
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: stress-test-results
+        path: results/
+
+  spike-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'spike'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install k6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run spike tests
+      run: k6 run --out json=results/spike-test-results.json tests/spike/api-spike-test.js
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: spike-test-results
+        path: results/
+
+  analyze-results:
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, load-tests, stress-tests, spike-tests]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download test results
+      uses: actions/download-artifact@v3
+      with:
+        path: results/
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Generate test report
+      run: |
+        echo "# Performance Test Report" > test-report.md
+        echo "Generated on: $(date)" >> test-report.md
+        echo "" >> test-report.md
+        echo "## Test Results Summary" >> test-report.md
+        
+        if [ -d "results/smoke-test-results" ]; then
+          echo "✅ Smoke tests completed" >> test-report.md
+        fi
+        
+        if [ -d "results/load-test-results" ]; then
+          echo "📈 Load tests completed" >> test-report.md
+        fi
+        
+        if [ -d "results/stress-test-results" ]; then
+          echo "💪 Stress tests completed" >> test-report.md
+        fi
+        
+        if [ -d "results/spike-test-results" ]; then
+          echo "⚡ Spike tests completed" >> test-report.md
+        fi
+        
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('test-report.md')) {
+            const report = fs.readFileSync('test-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+          }
