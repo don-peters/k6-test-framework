@@ -1,0 +1,245 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "K6 Performance Testing Dashboard",
+    "tags": ["k6", "performance", "testing"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Virtual Users",
+        "type": "stat",
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\") FROM \"vus\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "center"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 100}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate (req/s)",
+        "type": "stat", 
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\") FROM \"http_reqs\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 10},
+                {"color": "green", "value": 50}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Error Rate (%)",
+        "type": "stat",
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\")*100 FROM \"http_req_failed\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 5},
+                {"color": "red", "value": 10}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Response Time P95 (ms)",
+        "type": "stat",
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\") FROM \"http_req_duration\" WHERE \"aggregation\"='p95' AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "unit": "ms",
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 500},
+                {"color": "red", "value": 1000}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "HTTP Response Times",
+        "type": "timeseries",
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\") FROM \"http_req_duration\" WHERE \"aggregation\"='avg' AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "alias": "Average"
+          },
+          {
+            "query": "SELECT mean(\"value\") FROM \"http_req_duration\" WHERE \"aggregation\"='p95' AND $timeFilter GROUP BY time($__interval) fill(null)", 
+            "rawQuery": true,
+            "refId": "B",
+            "alias": "95th Percentile"
+          },
+          {
+            "query": "SELECT mean(\"value\") FROM \"http_req_duration\" WHERE \"aggregation\"='p99' AND $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true, 
+            "refId": "C",
+            "alias": "99th Percentile"
+          }
+        ],
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 8},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Request Rate Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "query": "SELECT derivative(mean(\"value\"), 1s) FROM \"http_reqs\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 8},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "HTTP Status Codes",
+        "type": "piechart",
+        "targets": [
+          {
+            "query": "SELECT sum(\"value\") FROM \"http_reqs\" WHERE $timeFilter GROUP BY \"status\" fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 9, "w": 8, "x": 0, "y": 17},
+        "options": {
+          "pieType": "pie",
+          "displayLabels": ["name", "value"]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Data Sent/Received",
+        "type": "timeseries",
+        "targets": [
+          {
+            "query": "SELECT derivative(mean(\"value\"), 1s) FROM \"data_sent\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "alias": "Data Sent"
+          },
+          {
+            "query": "SELECT derivative(mean(\"value\"), 1s) FROM \"data_received\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "B", 
+            "alias": "Data Received"
+          }
+        ],
+        "gridPos": {"h": 9, "w": 8, "x": 8, "y": 17},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "binBps",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Checks Success Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "query": "SELECT mean(\"value\")*100 FROM \"checks\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+            "rawQuery": true,
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 9, "w": 8, "x": 16, "y": 17},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 90},
+                {"color": "green", "value": 95}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
