@@ -10,6 +10,7 @@
     "test:stress": "k6 run tests/stress/api-stress-test.js",
     "test:spike": "k6 run tests/spike/api-spike-test.js",
     "test:smoke": "k6 run tests/smoke/api-smoke-test.js",
+    "analyze": "node scripts/analyze-results.js",
     "monitoring:up": "docker-compose -f docker/docker-compose.yml up -d",
     "monitoring:down": "docker-compose -f docker/docker-compose.yml down",
     "monitoring:logs": "docker-compose -f docker/docker-compose.yml logs -f",
