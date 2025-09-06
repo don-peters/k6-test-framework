@@ -5,11 +5,13 @@ A comprehensive k6 testing framework with TypeScript support, Grafana dashboards
 ## 🚀 Features
 
 - **TypeScript Support**: Write tests with full type safety
-- **Grafana Dashboards**: Real-time monitoring and visualization
+- **Grafana Dashboards**: Real-time monitoring and visualization  
+- **k6 Cloud Integration**: Advanced analytics and team collaboration
 - **CI/CD Integration**: Automated testing with GitHub Actions
 - **Multiple Environments**: Dev, staging, and production configurations
 - **Best Practices**: Following k6 performance testing guidelines
 - **Public API Examples**: Ready-to-use tests for popular free APIs
+- **Docker Optional**: Works with or without Docker
 
 ## 📁 Project Structure
 
@@ -78,6 +80,23 @@ npm run monitoring:up
 
 # Run tests with dashboard output
 k6 run --out influxdb=http://localhost:8086/k6 tests/load/api-load-test.js
+
+# Access Grafana at http://localhost:3000 (admin/admin)
+```
+
+### 4. Optional: k6 Cloud Integration
+For advanced analytics and team collaboration:
+```bash
+# Login to k6 Cloud (free account required)
+k6 cloud login
+
+# Run tests in k6 Cloud infrastructure
+npm run test:cloud:smoke   # Cloud execution
+npm run test:cloud:load    # Scalable load testing
+
+# Or stream results to cloud while running locally
+npm run test:hybrid:smoke  # Local execution + cloud analytics
+```
 ```
 
 ### 4. View Results
